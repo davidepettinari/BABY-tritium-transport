@@ -81,12 +81,40 @@ cut_result = gmsh.model.occ.cut([(3, main_cylinder)], [(3, hole_cylinder)])
 # Synchronize to apply changes
 gmsh.model.occ.synchronize()
 
-# Set global mesh refinement (smaller values → finer mesh)
-gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 1)  # Minimum element size
-gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 10)  # Maximum element size
 
-# Apply fine mesh locally to all points (optional)
-gmsh.model.mesh.setSize(gmsh.model.getEntities(0), 0.3)
+print(gmsh.model.getEntities(dim=2))
+# Identify surface tags
+# Note: You may need to inspect your geometry to determine the correct tags
+# For demonstration, let's assume:
+inner_surface_tag = 4  # Replace with actual tag of the inner surface
+outer_surface_tag = 5  # Replace with actual tag of the outer surface
+
+# Define mesh sizes
+inner_mesh_size = 0.5  # Finer mesh on the inner surface
+outer_mesh_size = 4.0  # Coarser mesh on the outer surface
+
+# Create mesh size fields
+inner_field = gmsh.model.mesh.field.add("Constant")
+gmsh.model.mesh.field.setNumber(inner_field, "VIn", inner_mesh_size)
+gmsh.model.mesh.field.setNumbers(inner_field, "SurfacesList", [inner_surface_tag])
+
+outer_field = gmsh.model.mesh.field.add("Constant")
+gmsh.model.mesh.field.setNumber(outer_field, "VIn", outer_mesh_size)
+gmsh.model.mesh.field.setNumbers(outer_field, "SurfacesList", [outer_surface_tag])
+
+# Combine fields
+min_field = gmsh.model.mesh.field.add("Min")
+gmsh.model.mesh.field.setNumbers(min_field, "FieldsList", [inner_field, outer_field])
+
+# Set the background mesh field
+gmsh.model.mesh.field.setAsBackgroundMesh(min_field)
+
+# # Set global mesh refinement (smaller values → finer mesh)
+# gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 1)  # Minimum element size
+# gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 10)  # Maximum element size
+
+# # Apply fine mesh locally to all points (optional)
+# gmsh.model.mesh.setSize(gmsh.model.getEntities(0), 0.3)
 
 # Check that the cut operation was successful
 if cut_result:
