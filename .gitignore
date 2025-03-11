@@ -169,3 +169,12 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+# OpenMC files
+*.h5
+*.xml
+
+# Gmsh files
+*.vtk
+*.msh
