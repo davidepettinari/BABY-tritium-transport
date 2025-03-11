@@ -1,7 +1,6 @@
 import openmc
 import argparse
 from libra_toolbox.neutronics import A325_generator_diamond, vault
-from openmc_fusion_benchmarks import from_irdff as irdff
 import helpers
 
 
@@ -510,7 +509,7 @@ def baby_model():
     settings.batches = 100
     settings.inactive = 0
     settings.run_mode = "fixed source"
-    settings.particles = int(1e5)
+    settings.particles = int(1e4)
     settings.output = {"tallies": False}
     settings.photon_transport = True
 
@@ -522,159 +521,22 @@ def baby_model():
     tallies = openmc.Tallies()
 
     # sets up filters for the tallies
-    # particle filters
-    neutron_filter = openmc.ParticleFilter(["neutron"])
-    photon_filter = openmc.ParticleFilter(["photon"])
-    energy_bins = openmc.mgxs.GROUP_STRUCTURES["VITAMIN-J-175"]
-    energy_filter = openmc.EnergyFilter(energy_bins)
-    nuclides = ["zr90", "nb93"]
-
-    # cell filters
-    # z_plane_zr 99.465
-    # z_plane_nb 89.265
-    # z_plane_diamond = 84.715
-
-    cell_filter_list = [
-        openmc.CellFilter(act_foils_zr_cell),
-        openmc.CellFilter(act_foils_nb_cell),
-    ]
-
-    # surface filters
-    act_foils_surface_zr_filter = openmc.SurfaceFilter(64)
-    act_foils_surface_nb_filter = openmc.SurfaceFilter(66)
-    diamond_surface_filter = openmc.SurfaceFilter(60)
-
-    # dosimetry tallies from IRDFF-II nuclear data library
-    zr90_n2n_acef = "irdff2_xs/dos-irdff2-4025.acef"
-    nb93_n2n_acef = "irdff2_xs/dos-irdff2-4125.acef"
-
-    irdff_xs = [zr90_n2n_acef, nb93_n2n_acef]
-    reactions = [16, 11016]
-
-    # define tallies according to simulation type
-
-    for n, r, x, c in zip(nuclides, reactions, irdff_xs, cell_filter_list):
-        tally = openmc.Tally(name=f"rr_{n}")
-        irdff_xs = irdff.cross_section(x)
-        multiplier = openmc.EnergyFunctionFilter.from_tabulated1d(irdff_xs[r])
-        tally.filters = [c, neutron_filter, multiplier]
-        tally.scores = ["flux"]
-        tallies.append(tally)
-
-    act_foils_zr_flux_tally = openmc.Tally(name="act_foils_zr_flux")
-    act_foils_zr_flux_tally.scores = ["flux"]
-    act_foils_zr_flux_tally.filters = [
-        openmc.CellFromFilter(act_foils_zr_cell),
-        neutron_filter,
-        energy_filter,
-    ]
-    tallies.append(act_foils_zr_flux_tally)
-
-    act_foils_zr_current_tally = openmc.Tally(name="act_foils_zr_current")
-    act_foils_zr_current_tally.scores = ["current"]
-    act_foils_zr_current_tally.filters = [
-        openmc.CellFromFilter(act_foils_zr_cell),
-        neutron_filter,
-        energy_filter,
-        act_foils_surface_zr_filter,
-    ]
-    tallies.append(act_foils_zr_current_tally)
-
-    act_foils_nb_flux_tally = openmc.Tally(name="act_foils_nb_flux")
-    act_foils_nb_flux_tally.scores = ["flux"]
-    act_foils_nb_flux_tally.filters = [
-        openmc.CellFromFilter(act_foils_nb_cell),
-        neutron_filter,
-        energy_filter,
-    ]
-    tallies.append(act_foils_nb_flux_tally)
-
-    act_foils_nb_current_tally = openmc.Tally(name="act_foils_nb_current")
-    act_foils_nb_current_tally.scores = ["current"]
-    act_foils_nb_current_tally.filters = [
-        openmc.CellFromFilter(act_foils_nb_cell),
-        neutron_filter,
-        energy_filter,
-        act_foils_surface_nb_filter,
-    ]
-    tallies.append(act_foils_nb_current_tally)
-
-    diamond_flux_tally = openmc.Tally(name="diamond_flux")
-    diamond_flux_tally.scores = ["flux"]
-    diamond_flux_tally.filters = [
-        openmc.CellFilter(diamond_detect_cell),
-        neutron_filter,
-        energy_filter,
-    ]
-    tallies.append(diamond_flux_tally)
-
-    diamond_current_tally = openmc.Tally(name="diamond_current")
-    diamond_current_tally.scores = ["current"]
-    diamond_current_tally.filters = [
-        openmc.CellFromFilter(diamond_detect_cell),
-        neutron_filter,
-        energy_filter,
-        diamond_surface_filter,
-    ]
-    tallies.append(diamond_current_tally)
-
-    diamond_elastic_tally = openmc.Tally(name="elastic_scattering")
-    diamond_elastic_tally.scores = ["elastic"]
-    diamond_elastic_tally.filters = [
-        openmc.CellFilter(diamond_detect_cell),
-        neutron_filter,
-        energy_filter,
-    ]
-    tallies.append(diamond_elastic_tally)
-
-    # Istantaneous neutron dose tallies
-    energy_bins_n, dose_coeffs_n = openmc.data.dose_coefficients(
-        particle="neutron", geometry="ISO"  # Refer to ICRP-116 (Section 3.2)
+    # mesh filters
+    unstructured_mesh = openmc.UnstructuredMesh(
+        "../unstructured_mesh/baby.vtk", library="moab"
     )
-    energy_function_filter_n = openmc.EnergyFunctionFilter(energy_bins_n, dose_coeffs_n)
-    energy_function_filter_n.interpolation = (
-        "cubic"  # cubic interpolation is recommended by ICRP
-    )
-
-    mesh = openmc.RegularMesh()
-    mesh.dimension = (130, 90, 60)
-    mesh.lower_left = (-100.00, -200.00, -100.00)
-    mesh.upper_right = (1200.00, 700.00, 500.00)
-
-    mesh_filter = openmc.MeshFilter(mesh)
-
-    neutron_dose_tally = openmc.Tally(name="neutron_dose_on_mesh")
-    neutron_dose_tally.filters = [
-        mesh_filter,
-        neutron_filter,
-        energy_function_filter_n,
-    ]
-    neutron_dose_tally.scores = ["flux"]
-    tallies.append(neutron_dose_tally)
-
-    # Istantaneous photon dose tallies
-    energy_bins_p, dose_coeffs_p = openmc.data.dose_coefficients(
-        particle="photon", geometry="ISO"  # Refer to ICRP-116 (Section 3.2)
-    )
-    energy_function_filter_p = openmc.EnergyFunctionFilter(energy_bins_p, dose_coeffs_p)
-    energy_function_filter_p.interpolation = (
-        "cubic"  # cubic interpolation is recommended by ICRP
-    )
-
-    photon_dose_tally = openmc.Tally(name="photon_dose_on_mesh")
-    photon_dose_tally.filters = [
-        mesh_filter,
-        photon_filter,
-        energy_function_filter_p,
-    ]
-    photon_dose_tally.scores = ["flux"]
-    tallies.append(photon_dose_tally)
+    unstructured_mesh_filter = openmc.MeshFilter(unstructured_mesh)
 
     tbr_tally = openmc.Tally(name="TBR")
     tbr_tally.scores = ["(n,Xt)"]
     tbr_tally.filters = [openmc.CellFilter(cllif_cell)]
     tbr_tally.nuclides = ["Li6", "Li7"]
     tallies.append(tbr_tally)
+
+    tbr_mesh_tally = openmc.Tally(name="UM_TBR")
+    tbr_mesh_tally.scores = ["(n,Xt)"]
+    tbr_mesh_tally.filters = [openmc.CellFilter(cllif_cell), unstructured_mesh_filter]
+    tallies.append(tbr_mesh_tally)
 
     model = vault.build_vault_model(
         settings=settings,
