@@ -72,7 +72,7 @@ main_cylinder = gmsh.model.occ.addCylinder(
 
 # Create the hole cylinder (tag = 2), making sure it goes all the way through
 hole_cylinder = gmsh.model.occ.addCylinder(
-    x_c, y_c, z_new, 0, 0, hole_height, hole_radius
+    x_c, y_c, cllif_z, 0, 0, -hole_height, hole_radius
 )
 
 # Perform the boolean subtraction (main_cylinder - hole_cylinder)
