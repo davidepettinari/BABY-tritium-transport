@@ -82,8 +82,8 @@ cut_result = gmsh.model.occ.cut([(3, main_cylinder)], [(3, hole_cylinder)])
 gmsh.model.occ.synchronize()
 
 # Set global mesh refinement (smaller values → finer mesh)
-gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 0.3)  # Minimum element size
-gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 0.7)  # Maximum element size
+gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 1)  # Minimum element size
+gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 10)  # Maximum element size
 
 # Apply fine mesh locally to all points (optional)
 gmsh.model.mesh.setSize(gmsh.model.getEntities(0), 0.3)
