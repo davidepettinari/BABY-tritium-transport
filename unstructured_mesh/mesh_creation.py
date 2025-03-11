@@ -143,7 +143,15 @@ gmsh.write("baby.vtk")  # Save also in VTK format
 # Open Gmsh GUI to visualize the mesh (optional)
 gmsh.fltk.run()
 
-# Finalize Gmsh
-gmsh.finalize()
 
 print("Mesh successfully created and converted to VTK for ParaView.")
+
+# Print all cell types in the mesh
+element_types = gmsh.model.mesh.getElementTypes()
+print("Element types in the mesh:")
+for elem_type in element_types:
+    print(
+        f"Element type: {elem_type}, Name: {gmsh.model.mesh.getElementProperties(elem_type)[0]}"
+    )
+# Finalize Gmsh
+gmsh.finalize()
