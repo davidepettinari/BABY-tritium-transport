@@ -88,10 +88,11 @@ print(gmsh.model.getEntities(dim=2))
 # For demonstration, let's assume:
 inner_surface_tag = 4  # Replace with actual tag of the inner surface
 outer_surface_tag = 5  # Replace with actual tag of the outer surface
-
+bottom_surface_tag = 6  # Replace with actual tag of the bottom surface
 # Define mesh sizes
-inner_mesh_size = 0.5  # Finer mesh on the inner surface
-outer_mesh_size = 4.0  # Coarser mesh on the outer surface
+inner_mesh_size = 0.2  # Finer mesh on the inner surface
+outer_mesh_size = 2.0  # Coarser mesh on the outer surface
+bottom_mesh_size = 0.5  # Coarser mesh on the bottom surface
 
 # Create mesh size fields
 inner_field = gmsh.model.mesh.field.add("Constant")
@@ -102,9 +103,15 @@ outer_field = gmsh.model.mesh.field.add("Constant")
 gmsh.model.mesh.field.setNumber(outer_field, "VIn", outer_mesh_size)
 gmsh.model.mesh.field.setNumbers(outer_field, "SurfacesList", [outer_surface_tag])
 
+bottom_field = gmsh.model.mesh.field.add("Constant")
+gmsh.model.mesh.field.setNumber(bottom_field, "VIn", bottom_mesh_size)
+gmsh.model.mesh.field.setNumbers(bottom_field, "SurfacesList", [bottom_surface_tag])
+
 # Combine fields
 min_field = gmsh.model.mesh.field.add("Min")
-gmsh.model.mesh.field.setNumbers(min_field, "FieldsList", [inner_field, outer_field])
+gmsh.model.mesh.field.setNumbers(
+    min_field, "FieldsList", [inner_field, outer_field, bottom_field]
+)
 
 # Set the background mesh field
 gmsh.model.mesh.field.setAsBackgroundMesh(min_field)
