@@ -509,7 +509,7 @@ def baby_model():
     settings.batches = 100
     settings.inactive = 0
     settings.run_mode = "fixed source"
-    settings.particles = int(1e7)
+    settings.particles = int(1e5)
     settings.output = {"tallies": False}
 
     ############################################################################
@@ -532,10 +532,10 @@ def baby_model():
     tbr_tally.nuclides = ["Li6", "Li7"]
     tallies.append(tbr_tally)
 
-    tbr_mesh_tally = openmc.Tally(name="tallies_on_mesh")
-    tbr_mesh_tally.scores = ['flux', 'absorption','(n,Xt)']
-    tbr_mesh_tally.filters = [openmc.CellFilter(cllif_cell), unstructured_mesh_filter]
-    tallies.append(tbr_mesh_tally)
+    um_tally = openmc.Tally(name="tallies_on_mesh")
+    um_tally.scores = ['flux', 'absorption','(n,Xt)']
+    um_tally.filters = [openmc.CellFilter(cllif_cell), unstructured_mesh_filter]
+    tallies.append(um_tally)
 
     model = vault.build_vault_model(
         settings=settings,
