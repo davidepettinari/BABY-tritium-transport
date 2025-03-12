@@ -509,7 +509,7 @@ def baby_model():
     settings.batches = 100
     settings.inactive = 0
     settings.run_mode = "fixed source"
-    settings.particles = int(1e5)
+    settings.particles = int(1e7)
     settings.output = {"tallies": False}
 
     ############################################################################
