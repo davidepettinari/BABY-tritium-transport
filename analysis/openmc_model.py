@@ -532,8 +532,8 @@ def baby_model():
     tbr_tally.nuclides = ["Li6", "Li7"]
     tallies.append(tbr_tally)
 
-    tbr_mesh_tally = openmc.Tally(name="UM_TBR")
-    tbr_mesh_tally.scores = ["(n,Xt)"]
+    tbr_mesh_tally = openmc.Tally(name="tallies_on_mesh")
+    tbr_mesh_tally.scores = ['flux', 'absorption','(n,Xt)']
     tbr_mesh_tally.filters = [openmc.CellFilter(cllif_cell), unstructured_mesh_filter]
     tallies.append(tbr_mesh_tally)
 
